@@ -30,20 +30,25 @@ public class ProductionLine {
 		lineMotor = new EV3MediumRegulatedMotor(LINE_MOTOR_PORT);
 		isLineRunning = false;
 		display = disp;
-		thingworxConnector = new ThingworxConnector();
+		thingworxConnector = ThingworxConnector.getInstance();
 		thingworxConnector.setOnWorkingStateChanged(new OnWorkingStateChanged() {
 
 			@Override
 			public void onWorkingStateChanged(boolean newState) {
-				shouldRun = newState;
-				display.updateProperty("ShouldRun", newState);
-				if(newState) startLine();
-				else stopLine();
+					updateState(newState);
 			}
 			
 		});
 		thingworxConnector.startReader();
 		lineMotor.setSpeed(speed);
+		updateState(thingworxConnector.getRunningState());
+	}
+	
+	public void updateState(boolean newState) {
+		shouldRun = newState;
+		display.updateProperty("ShouldRun", newState);
+		if(newState) startLine();
+		else stopLine();
 	}
 	
 	public void startLine() {

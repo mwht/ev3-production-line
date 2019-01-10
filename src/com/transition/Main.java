@@ -7,6 +7,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 
+import com.transition.Camera.OnBlockPassedHandler;
 import com.transition.Camera.OnWrongBlockHandler;
 
 import lejos.hardware.Audio;
@@ -48,12 +49,22 @@ public class Main {
 		audio.setVolume(20);
 		
 		productionLine.startLine();
+		ThingworxConnector.getInstance().reportStart();
 		
 		camera.setOnWrongBlockHandler(new OnWrongBlockHandler() {
 
 			@Override
 			public void onWrongBlock() {
 				productionLine.stopLineAndReportError();
+			}
+			
+		});
+		
+		camera.setOnBlockPassedHandler(new OnBlockPassedHandler() {
+
+			@Override
+			public void onBlockPassed(int color) {
+				ThingworxConnector.getInstance().reportNewBlock(color);
 			}
 			
 		});
@@ -79,5 +90,6 @@ public class Main {
 		audio.setVolume(0);
 		productionLine.endLine();
 		camera.stopCamera();
+		ThingworxConnector.getInstance().reportStop();
 	}
 }

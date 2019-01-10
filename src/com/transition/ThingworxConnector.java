@@ -13,18 +13,20 @@ public class ThingworxConnector {
 	private static boolean running = false;
 	private OnWorkingStateChanged onWorkingStateChanged;
 	
-	private String getDataFromURL(String urlStr) throws Exception {
-		URL url = new URL(urlStr);
-		HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-								
-		InputStreamReader inputStreamReader = new InputStreamReader(urlConnection.getInputStream());
-		BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
-		String line;
-		StringBuffer sb = new StringBuffer();
-		if((line = bufferedReader.readLine()) != null) {
-			sb.append(line);
-		}
-		return sb.toString();
+	private String getDataFromURL(String urlStr) {
+		try {
+			URL url = new URL(urlStr);
+			HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+									
+			InputStreamReader inputStreamReader = new InputStreamReader(urlConnection.getInputStream());
+			BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+			String line;
+			StringBuffer sb = new StringBuffer();
+			if((line = bufferedReader.readLine()) != null) {
+				sb.append(line);
+			}
+			return sb.toString();
+		} catch (Exception e) { return ""; }
 	}
 	
 	public void setOnWorkingStateChanged(OnWorkingStateChanged onWorkingStateChanged) {
@@ -39,11 +41,24 @@ public class ThingworxConnector {
 	
 	public void stopReader() {
 		readerThreadRunnable.stop();
+		try {
+			readerThread.join(1000);
+			readerThread.interrupt();
+		} catch (Exception ignored) {}
 	}
 	
 	public void reportError() {
 		try {
-			getDataFromURL("http://192.168.137.1:8000/changeFlag");
+			getDataFromURL("http://192.168.137.1:8000/invalidBlock");
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	public void reportNewBlock(int color) {
+		try {
+			getDataFromURL("http://192.168.137.1:8000/reportBlock/"+color);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -63,12 +78,31 @@ public class ThingworxConnector {
 		public void onWorkingStateChanged(boolean newState);
 	}
 	
+	public void reportStart() {
+		try {
+			getDataFromURL("http://192.168.137.1:8000/start");
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	public void reportStop() {
+		try {
+			getDataFromURL("http://192.168.137.1:8000/stop");
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
 	private class ReaderThreadRunnable implements Runnable {
 		
 		private boolean lastState = false;
 		private boolean currentState = false;
 		private OnWorkingStateChanged onWorkingStateChanged;
 		private boolean running = true;
+		private boolean shouldBeOnline = true;
 		
 		public ReaderThreadRunnable(OnWorkingStateChanged onWorkingStateChanged) {
 			this.onWorkingStateChanged = onWorkingStateChanged;
